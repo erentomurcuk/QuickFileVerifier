@@ -8,6 +8,8 @@ Make sure that you read the LICENCE.md file before you use this program. Using t
 
 **Never** run any _.ps1_ or _.reg_ files without checking the files yourselves to avoid damaging your computer.
 
+GPG needs to run in English for the check message to be printed out correctly. You will still see the GPG output.
+
 ## Description
 
 Enables for you to quickly check for the GPG signature status, Code Signing signature status, SHA1; SHA256; SHA512 and MD5 hashes of a file.
