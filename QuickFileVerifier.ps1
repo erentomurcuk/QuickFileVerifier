@@ -31,7 +31,8 @@ param (
     [switch]$github,
     [switch]$help, 
     [switch]$toggleUpdateChecks,
-    [switch]$checkForUpdates
+    [switch]$checkForUpdates,
+    [switch]$updateProgram
 )
 
 $currentVersion = "1.3"
@@ -62,10 +63,13 @@ if ($github) {
 
 if ($help) {
     Write-Host "`nThis script is for quickly checking the hash and signatures of a file either by terminal or the context menu." -ForegroundColor White
+
     Write-Host "`nContext Menu" -ForegroundColor Red
     Write-Host "To run the script from the context menu, edit and run the .reg file in the repository. You can find the details in the README.md file." -ForegroundColor White
+
     Write-Host "`nTerminal" -ForegroundColor Red
     Write-Host "Just run the script as `".\QuickFileVerifier.ps1 <File Name>`"" -ForegroundColor White
+
     Write-Host "`nOptions" -ForegroundColor Red
     Write-Host "You can run the script with the following switches:" -ForegroundColor White
     Write-Host "-version: Prints the version of the script." -ForegroundColor White
@@ -73,6 +77,8 @@ if ($help) {
     Write-Host "-help: Prints this help message." -ForegroundColor White
     Write-Host "-toggleUpdateChecks: Toggles whether the script checks for updates every time it is run. It is disabled by default. Can also be changed from the config file.`n" -ForegroundColor White
     Write-Host "-checkForUpdates: Checks for updates.`n" -ForegroundColor White
+    Write-Host "-updateProgram: Downloads and installs the latest version of the script (Currently being tested!).`n" -ForegroundColor White
+
     exit
 
 }
@@ -133,9 +139,70 @@ function Check-UpdateAllowance {
 
 }
 
+# Define the URL of the latest release zip file and the target directory
+$releaseUrl = "https://github.com/erentomurcuk/QuickFileVerifier/releases/latest/download/QuickFileVerifier.zip"
+$targetDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# Function to download and extract a zip file
+function Download-And-Extract {
+    param (
+        [string]$url,
+        [string]$targetDirectory
+    )
+    
+    # Create the target directory if it doesn't exist
+    if (-not (Test-Path -Path $targetDirectory -PathType Container)) {
+        New-Item -Path $targetDirectory -ItemType Directory
+    }
+    
+    # Create a temporary file to store the downloaded zip
+    $tempZipFile = [System.IO.Path]::Combine($env:TEMP, [System.Guid]::NewGuid().ToString() + ".zip")
+    
+    try {
+        # Download the zip file
+        Invoke-WebRequest -Uri $url -OutFile $tempZipFile
+    
+        # Extract the zip file to the target directory
+        Expand-Archive -Path $tempZipFile -DestinationPath $targetDirectory -Force
+    
+        Write-Host "Update downloaded and extracted successfully to $targetDirectory" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to download or extract the update." -ForegroundColor Red
+    } finally {
+        # Clean up the temporary zip file
+        Remove-Item -Path $tempZipFile -Force
+    }
+}
+
 if ($checkForUpdates) {
     CheckForUpdates
     exit
+}
+
+if ($updateProgram) {
+
+    Write-Host "`nThis command is being tested and may break the program. Type `"YES`" to continue." -ForegroundColor Yellow
+    $continue = Read-Host
+
+    if ($continue -eq "YES") {
+        Write-Host "`nChecking for updates..." -ForegroundColor Yellow
+        $latestVersion = Invoke-RestMethod -Uri "https://api.github.com/repos/erentomurcuk/QuickFileVerifier/releases/latest" -Method Get
+        $latestVersion = $latestVersion.tag_name
+        if ($latestVersion -ne $currentVersion) {
+            Write-Host "There is a new version available: $latestVersion" -ForegroundColor Green
+            Write-Host "Downloading and installing the latest version..."
+            Download-And-Extract -url $releaseUrl -targetDirectory $targetDirectory
+            exit
+        } else {
+            Write-Host "You have the latest version.`n" -ForegroundColor Green
+            exit
+        }
+    } else {
+        Write-Host "`nUpdate cancelled.`n" -ForegroundColor Red
+        exit
+    }
+
+    
 }
 
 # Run the function to check for updates
@@ -354,7 +421,7 @@ if (Test-Path -Path $filePath -PathType Leaf) {
             Write-Host "User SHA512 Hash: $userHash" -ForegroundColor Cyan
         }
         "!" {
-            Write-Host "Skipped or invalid hash type/length. Exiting." -ForegroundColor Red
+            Write-Host "Invalid hash type/length. Exiting." -ForegroundColor Red
             exit
         }
     }
@@ -365,6 +432,8 @@ if (Test-Path -Path $filePath -PathType Leaf) {
         } else {
             Write-Host "`nHashes do not match. The file may be altered or corrupted." -ForegroundColor Red
         }
+    } else {
+        Write-Host "`nSkipping hash comparison..." -ForegroundColor Yellow
     }
 }
 
