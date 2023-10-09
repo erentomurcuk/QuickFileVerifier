@@ -30,10 +30,12 @@ param (
     [switch]$version,
     [switch]$github,
     [switch]$help, 
-    [switch]$toggleUpdateChecks
+    [switch]$toggleUpdateChecks,
+    [switch]$checkForUpdates,
+    [switch]$updateProgram
 )
 
-$currentVersion = "1.2.2"
+$currentVersion = "1.3"
 
 try {
     # Get the directory where the script is located
@@ -61,16 +63,22 @@ if ($github) {
 
 if ($help) {
     Write-Host "`nThis script is for quickly checking the hash and signatures of a file either by terminal or the context menu." -ForegroundColor White
+
     Write-Host "`nContext Menu" -ForegroundColor Red
     Write-Host "To run the script from the context menu, edit and run the .reg file in the repository. You can find the details in the README.md file." -ForegroundColor White
+
     Write-Host "`nTerminal" -ForegroundColor Red
     Write-Host "Just run the script as `".\QuickFileVerifier.ps1 <File Name>`"" -ForegroundColor White
+
     Write-Host "`nOptions" -ForegroundColor Red
     Write-Host "You can run the script with the following switches:" -ForegroundColor White
     Write-Host "-version: Prints the version of the script." -ForegroundColor White
     Write-Host "-github: GitHub repository link of the script." -ForegroundColor White
     Write-Host "-help: Prints this help message." -ForegroundColor White
-    Write-Host "-toggleUpdateChecks: Toggles whether the script checks for updates every time it is run. It is disabled by default.`n" -ForegroundColor White
+    Write-Host "-toggleUpdateChecks: Toggles whether the script checks for updates every time it is run. It is disabled by default. Can also be changed from the config file.`n" -ForegroundColor White
+    Write-Host "-checkForUpdates: Checks for updates.`n" -ForegroundColor White
+    Write-Host "-updateProgram: Downloads and installs the latest version of the script (Currently being tested!).`n" -ForegroundColor White
+
     exit
 
 }
@@ -104,6 +112,20 @@ if ($toggleUpdateChecks) {
 }
 
 function CheckForUpdates {
+
+    Write-Host "`nChecking for updates..." -ForegroundColor Yellow
+    $latestVersion = Invoke-RestMethod -Uri "https://api.github.com/repos/erentomurcuk/QuickFileVerifier/releases/latest" -Method Get
+    $latestVersion = $latestVersion.tag_name
+    if ($latestVersion -ne $currentVersion) {
+        Write-Host "There is a new version available: $latestVersion" -ForegroundColor Green
+        Write-Host "You can download the latest version from: <https://github.com/erentomurcuk/QuickFileVerifier/releases>`n"
+    } else {
+        Write-Host "You have the latest version.`n" -ForegroundColor Green
+    }
+}
+
+function Check-UpdateAllowance {
+
     try {
         $configContent = Get-Content -Path $configFilePath | ConvertFrom-Json
         $checkForUpdates = $configContent.CheckForUpdates
@@ -112,20 +134,79 @@ function CheckForUpdates {
     }
 
     if ($checkForUpdates -eq $true) {
+        CheckForUpdates
+    }
+
+}
+
+# Define the URL of the latest release zip file and the target directory
+$releaseUrl = "https://github.com/erentomurcuk/QuickFileVerifier/releases/latest/download/QuickFileVerifier.zip"
+$targetDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# Function to download and extract a zip file
+function Download-And-Extract {
+    param (
+        [string]$url,
+        [string]$targetDirectory
+    )
+    
+    # Create the target directory if it doesn't exist
+    if (-not (Test-Path -Path $targetDirectory -PathType Container)) {
+        New-Item -Path $targetDirectory -ItemType Directory
+    }
+    
+    # Create a temporary file to store the downloaded zip
+    $tempZipFile = [System.IO.Path]::Combine($env:TEMP, [System.Guid]::NewGuid().ToString() + ".zip")
+    
+    try {
+        # Download the zip file
+        Invoke-WebRequest -Uri $url -OutFile $tempZipFile
+    
+        # Extract the zip file to the target directory
+        Expand-Archive -Path $tempZipFile -DestinationPath $targetDirectory -Force
+    
+        Write-Host "Update downloaded and extracted successfully to $targetDirectory" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to download or extract the update." -ForegroundColor Red
+    } finally {
+        # Clean up the temporary zip file
+        Remove-Item -Path $tempZipFile -Force
+    }
+}
+
+if ($checkForUpdates) {
+    CheckForUpdates
+    exit
+}
+
+if ($updateProgram) {
+
+    Write-Host "`nThis command is being tested and may break the program. Type `"YES`" to continue." -ForegroundColor Yellow
+    $continue = Read-Host
+
+    if ($continue -eq "YES") {
         Write-Host "`nChecking for updates..." -ForegroundColor Yellow
         $latestVersion = Invoke-RestMethod -Uri "https://api.github.com/repos/erentomurcuk/QuickFileVerifier/releases/latest" -Method Get
         $latestVersion = $latestVersion.tag_name
         if ($latestVersion -ne $currentVersion) {
             Write-Host "There is a new version available: $latestVersion" -ForegroundColor Green
-            Write-Host "You can download the latest version from: <https://github.com/erentomurcuk/QuickFileVerifier/releases>`n"
+            Write-Host "Downloading and installing the latest version..."
+            Download-And-Extract -url $releaseUrl -targetDirectory $targetDirectory
+            exit
         } else {
             Write-Host "You have the latest version.`n" -ForegroundColor Green
+            exit
         }
+    } else {
+        Write-Host "`nUpdate cancelled.`n" -ForegroundColor Red
+        exit
     }
+
+    
 }
 
 # Run the function to check for updates
-CheckForUpdates
+Check-UpdateAllowance
 
 # Function to check if GPG is installed
 function Is-GPGInstalled {
@@ -153,14 +234,12 @@ function Get-CodeSigningStatus {
         [string]$filePath
     )
     try {
-        $signer = Get-AuthenticodeSignature -FilePath $filePath
-        $signatureStatus = "Signed"
+        $signer = Get-AuthenticodeSignature -FilePath $filePath -ErrorAction Stop
         $signerName = $signer.SignerCertificate.Subject
         $signerIssuer = $signer.SignerCertificate.Issuer
         $signatureTimestamp = $signer.SignerCertificate.NotBefore
         $serialNumber = $signer.SignerCertificate.SerialNumber
     } catch {
-        $signatureStatus = "Not signed"
         $signerName = $null
         $signerIssuer = $null
         $signatureTimestamp = $null
@@ -168,13 +247,13 @@ function Get-CodeSigningStatus {
     }
 
     return @{
-        SignatureStatus = $signatureStatus
         SignerName = $signerName
         SignerIssuer = $signerIssuer
         SignatureTimestamp = $signatureTimestamp
         SerialNumber = $serialNumber
     }
 }
+
 
 # Function to verify GPG signature
 function Verify-GPGSignature {
@@ -249,18 +328,19 @@ function Get-HashType {
 
 # Check if the file exists
 if (Test-Path -Path $filePath -PathType Leaf) {
-    Write-Host "File: $filePath" -ForegroundColor Green
+    Write-Host "`nFile: $filePath" -ForegroundColor Green
     Write-Host "`nChecking code signing..." -ForegroundColor Yellow
     
     # Get and display code signing status
     $codeSigningStatus = Get-CodeSigningStatus -filePath $filePath
-    Write-Host "Code Signing Status: $($codeSigningStatus.SignatureStatus)" -ForegroundColor Cyan
     
-    if ($codeSigningStatus.SignatureStatus -eq "Signed") {
+    if ($codeSigningStatus.SignerName -ne $null) {
         Write-Host "Signer Name: $($codeSigningStatus.SignerName)" -ForegroundColor Cyan
         Write-Host "Signer Issuer: $($codeSigningStatus.SignerIssuer)" -ForegroundColor Cyan
         Write-Host "Signature Timestamp: $($codeSigningStatus.SignatureTimestamp)" -ForegroundColor Cyan
-        Write-Host "Serial Number: $($codeSigningStatus.SerialNumber)" -ForegroundColor Cyan
+        Write-Host "Serial Number: $($codeSigningStatus.SerialNumber)`n" -ForegroundColor Cyan
+    } else {
+        Write-Host "Code signing not found.`n" -ForegroundColor Red
     }
     
     # Warn the user about GPG key import
@@ -282,29 +362,16 @@ if (Test-Path -Path $filePath -PathType Leaf) {
     } else {
         Write-Host "Error: GPG is not installed. Please install GPG to perform GPG signature checks." -ForegroundColor Red
     }
-    
-    # Select a hash algorithm
-    #Write-Host "`nSelect a hash algorithm:" -ForegroundColor Yellow
-    #Write-Host "1. SHA1"
-    #Write-Host "2. SHA256"
-    #Write-Host "3. SHA512"
-    #Write-Host "4. MD5"
-    
-    # Prompt user to choose a hash algorithm by number
-    # $choice = Read-Host "Enter the number corresponding to the desired hash algorithm (1-4)"
 
-    #switch ($choice) {
-    #    1 { $algorithm = "SHA1" }
-    #    2 { $algorithm = "SHA256" }
-    #    3 { $algorithm = "SHA512" }
-    #    4 { $algorithm = "MD5" }
-    #    default { Write-Host "Invalid choice. Exiting." -ForegroundColor Red; exit }
-    #}
 
     # Calculate and display the hash
+    $hash = Calculate-FileHash -filePath $filePath -algorithm MD5
+    $fileMD5Hash = $hash
+    Write-Host "`nMD5:    $hash" -ForegroundColor Magenta
+
     $hash = Calculate-FileHash -filePath $filePath -algorithm SHA1
     $fileSHA1Hash = $hash
-    Write-Host "SHA1: $hash" -ForegroundColor Green
+    Write-Host "SHA1:   $hash" -ForegroundColor Green
 
     $hash = Calculate-FileHash -filePath $filePath -algorithm SHA256
     $fileSHA256Hash = $hash
@@ -313,10 +380,6 @@ if (Test-Path -Path $filePath -PathType Leaf) {
     $hash = Calculate-FileHash -filePath $filePath -algorithm SHA512
     $fileSHA512Hash = $hash
     Write-Host "SHA512: $hash" -ForegroundColor Cyan
-
-    $hash = Calculate-FileHash -filePath $filePath -algorithm MD5
-    $fileMD5Hash = $hash
-    Write-Host "MD5: $hash" -ForegroundColor Magenta
 
 
     # Prompt user to input their own hash for verification
@@ -358,7 +421,7 @@ if (Test-Path -Path $filePath -PathType Leaf) {
             Write-Host "User SHA512 Hash: $userHash" -ForegroundColor Cyan
         }
         "!" {
-            Write-Host "Skipped or invalid hash type/length. Exiting." -ForegroundColor Red
+            Write-Host "Invalid hash type/length. Exiting." -ForegroundColor Red
             exit
         }
     }
@@ -369,9 +432,9 @@ if (Test-Path -Path $filePath -PathType Leaf) {
         } else {
             Write-Host "`nHashes do not match. The file may be altered or corrupted." -ForegroundColor Red
         }
+    } else {
+        Write-Host "`nSkipping hash comparison..." -ForegroundColor Yellow
     }
-} else {
-    Write-Host "File not found at the specified path: $filePath" -ForegroundColor Red
 }
 
 # Pause to prevent the terminal from closing immediately
