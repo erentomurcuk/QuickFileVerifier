@@ -2,6 +2,11 @@
 
 Current version: 1.0
 
+## Warning!
+
+Make sure that you read the LICENCE.md file before you use this program. Using this program means that you accept the licence.
+**Never** run any _.ps1_ or _.reg_ files without checking the files yourselves to avoid damaging your computer.
+
 ## Description
 
 Enables for you to quickly check for the GPG signature status, Code Signing signature status, SHA1; SHA256; SHA512 and MD5 hashes of a file.
