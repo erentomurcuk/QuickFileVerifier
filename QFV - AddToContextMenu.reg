@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\*\shell\QuickFileVerifier]
+@="Verify File with QFV"
+
+[HKEY_CLASSES_ROOT\*\shell\QuickFileVerifier\command]
+@="powershell.exe -ExecutionPolicy RemoteSigned -File \"C:\\Essentials\\QuickFileVerifier.ps1\" \"%1\""
