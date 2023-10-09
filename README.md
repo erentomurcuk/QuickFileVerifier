@@ -34,6 +34,12 @@ You can set it by pasting this command:
 ```powershell
 Set-ExecutionPolicy RemoteSigned
 ```
+To run this program everywhere, you will need to add it to the PATH.
+
+You can run this command to add the directory of the script into the PATH. Edit the required part with your path.
+```powershell
+set PATH=%PATH%;<YOUR PATH HERE>
+```
 
 ## Issues
 
