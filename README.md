@@ -1,6 +1,5 @@
 # QuickFileVerifier
 
-Current version: 1.2
 Run `./QuickFileVerifier.ps1 -help` for more information.
 
 ## Warning!
