@@ -4,7 +4,7 @@
     This PowerShell script calculates the hash (checksum) of a selected file using different hash algorithms,
     including SHA-1, SHA-256, SHA-512, and MD5.
     It also checks for code signing and provides code signing information if applicable.
-    Additionally, it checks if the selected file has a GPG signature file (.sig) and provides GPG signature information.
+    Additionally, it checks if the selected file has a GPG signature file (.sig) and provides GPG signature information given that the public key is imported.
     To run the script with GPG signature information, you need to have GPG installed.
 
 .NOTES
@@ -13,9 +13,11 @@
     Context menu name: Verify File with QFV
     Script version: 1.0
 
-    If there are bugs, please open an issue on GitHub.
+    Script creator: Eren Tomurcuk (GitHub: @erentomurcuk)
 
-    Prerequisites: PowerShell >=5.1 & GPG (if checking GPG signatures)
+    If there are bugs, please open an issue on GitHub: <https://github.com/erentomurcuk/QuickFileVerifier/issues>
+
+    Prerequisites: PowerShell >=5.1 & GPG (if checking GPG signatures, not necessary)
 
     Run the .reg file in the repository to run this script from the context menu.
     Make sure that you always check ANY .reg and .ps1 file before you run one!
