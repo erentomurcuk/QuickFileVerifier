@@ -33,7 +33,7 @@ param (
     [switch]$toggleUpdateChecks
 )
 
-$currentVersion = "1.2.1"
+$currentVersion = "1.2.2"
 
 try {
     # Get the directory where the script is located
