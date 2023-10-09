@@ -254,7 +254,6 @@ function Get-CodeSigningStatus {
     }
 }
 
-
 # Function to verify GPG signature
 function Verify-GPGSignature {
     param (
@@ -421,8 +420,7 @@ if (Test-Path -Path $filePath -PathType Leaf) {
             Write-Host "User SHA512 Hash: $userHash" -ForegroundColor Cyan
         }
         "!" {
-            Write-Host "Invalid hash type/length. Exiting." -ForegroundColor Red
-            exit
+            Write-Host "Invalid hash type/length." -ForegroundColor Red
         }
     }
 
