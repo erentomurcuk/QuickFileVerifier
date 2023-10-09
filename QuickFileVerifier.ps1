@@ -11,7 +11,6 @@
 
     Script Name: Quick File Verifier (QuickFileVerifier.ps1)
     Context menu name: Verify File with QFV
-    Script version: 1.2
 
     Script creator: Eren Tomurcuk (GitHub: @erentomurcuk)
 
@@ -34,7 +33,7 @@ param (
     [switch]$toggleUpdateChecks
 )
 
-$currentVersion = "1.2"
+$currentVersion = "1.2.1"
 
 try {
     # Get the directory where the script is located
@@ -261,7 +260,7 @@ if (Test-Path -Path $filePath -PathType Leaf) {
         Write-Host "Signer Name: $($codeSigningStatus.SignerName)" -ForegroundColor Cyan
         Write-Host "Signer Issuer: $($codeSigningStatus.SignerIssuer)" -ForegroundColor Cyan
         Write-Host "Signature Timestamp: $($codeSigningStatus.SignatureTimestamp)" -ForegroundColor Cyan
-        Write-Host "Serial Number (Fingerprint): $($codeSigningStatus.SerialNumber)" -ForegroundColor Cyan
+        Write-Host "Serial Number: $($codeSigningStatus.SerialNumber)" -ForegroundColor Cyan
     }
     
     # Warn the user about GPG key import
