@@ -11,7 +11,7 @@
 
     Script Name: Quick File Verifier (QuickFileVerifier.ps1)
     Context menu name: Verify File with QFV
-    Script version: 1.0
+    Script version: 1.1
 
     Script creator: Eren Tomurcuk (GitHub: @erentomurcuk)
 
@@ -25,8 +25,21 @@
 #>
 
 param (
-    [string]$filePath = $args[0]
+    [string]$filePath = $args[0],
+    [switch]$version,
+    [switch]$github
 )
+
+if ($version) {
+    Write-Host "Quick File Verifier v1.1`nCreated by Eren Tomurcuk`nGitHub: @erentomurcuk" -ForegroundColor Green
+    exit
+}
+
+
+if ($github) {
+    Write-Host "Quick File Verifier GitHub Repository: <https://github.com/erentomurcuk/QuickFileVerifier>" -ForegroundColor Green
+    exit
+}
 
 # Function to check if GPG is installed
 function Is-GPGInstalled {
