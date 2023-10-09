@@ -11,7 +11,7 @@
 
     Script Name: Quick File Verifier (QuickFileVerifier.ps1)
     Context menu name: Verify File with QFV
-    Script version: 1.1
+    Script version: 1.2
 
     Script creator: Eren Tomurcuk (GitHub: @erentomurcuk)
 
@@ -24,14 +24,32 @@
     
 #>
 
+#>
+
 param (
     [string]$filePath = $args[0],
     [switch]$version,
-    [switch]$github
+    [switch]$github,
+    [switch]$help, 
+    [switch]$toggleUpdateChecks
 )
 
+$currentVersion = "1.2"
+
+try {
+    # Get the directory where the script is located
+$scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# Construct the full path to the configuration file
+$configFilePath = Join-Path -Path $scriptDirectory -ChildPath "config.json"
+
+} catch {
+    Write-Host "Error occurred: Cannot find config.json" -ForegroundColor Red
+}
+
+
 if ($version) {
-    Write-Host "Quick File Verifier v1.1`nCreated by Eren Tomurcuk`nGitHub: @erentomurcuk" -ForegroundColor Green
+    Write-Host "Quick File Verifier $currentVersion`nCreated by Eren Tomurcuk`nGitHub: @erentomurcuk" -ForegroundColor Green
     exit
 }
 
@@ -40,6 +58,75 @@ if ($github) {
     Write-Host "Quick File Verifier GitHub Repository: <https://github.com/erentomurcuk/QuickFileVerifier>" -ForegroundColor Green
     exit
 }
+
+
+if ($help) {
+    Write-Host "`nThis script is for quickly checking the hash and signatures of a file either by terminal or the context menu." -ForegroundColor White
+    Write-Host "`nContext Menu" -ForegroundColor Red
+    Write-Host "To run the script from the context menu, edit and run the .reg file in the repository. You can find the details in the README.md file." -ForegroundColor White
+    Write-Host "`nTerminal" -ForegroundColor Red
+    Write-Host "Just run the script as `".\QuickFileVerifier.ps1 <File Name>`"" -ForegroundColor White
+    Write-Host "`nOptions" -ForegroundColor Red
+    Write-Host "You can run the script with the following switches:" -ForegroundColor White
+    Write-Host "-version: Prints the version of the script." -ForegroundColor White
+    Write-Host "-github: GitHub repository link of the script." -ForegroundColor White
+    Write-Host "-help: Prints this help message." -ForegroundColor White
+    Write-Host "-toggleUpdateChecks: Toggles whether the script checks for updates every time it is run. It is disabled by default.`n" -ForegroundColor White
+    exit
+
+}
+
+if ($toggleUpdateChecks) {
+    try {
+        $configContent = Get-Content -Path $configFilePath | ConvertFrom-Json
+        $checkForUpdates = $configContent.CheckForUpdates
+    } catch {
+        Write-Host "Error occurred: Cannot read `"config.json`" or the CheckForUpdates variable." -ForegroundColor Red
+    }
+    
+    if ($checkForUpdates -eq $false) {
+        Write-Host "`nYou have allowed this script to check GitHub API to check whether you have the latest version." -ForegroundColor Green
+        Write-Host "This script will check for updates every time you run it." -ForegroundColor White
+        Write-Host "If you want to disable this, run the script with the -toggleUpdateChecks switch.`n" -ForegroundColor White
+        $configContent.CheckForUpdates = $true
+    } else {
+        Write-Host "`nYou have disabled this script from checking GitHub API to check whether you have the latest version." -ForegroundColor Red
+        Write-Host "This script will not check for updates every time you run it." -ForegroundColor White
+        Write-Host "If you want to enable this, run the script with the -toggleUpdateChecks switch.`n" -ForegroundColor White
+        $configContent.CheckForUpdates = $false
+    }
+
+    # Convert the updated configuration back to JSON format
+    $updatedConfigJson = $configContent | ConvertTo-Json -Depth 4
+
+    # Save the updated configuration back to the file
+    $updatedConfigJson | Set-Content -Path $configFilePath
+    exit
+}
+
+function CheckForUpdates {
+    try {
+        $configContent = Get-Content -Path $configFilePath | ConvertFrom-Json
+        $checkForUpdates = $configContent.CheckForUpdates
+    } catch {
+        Write-Host "Error occurred: Cannot read `"config.json`" or the CheckForUpdates variable." -ForegroundColor Red
+    }
+
+    if ($checkForUpdates -eq $true) {
+        Write-Host "`nChecking for updates..." -ForegroundColor Yellow
+        $latestVersion = Invoke-RestMethod -Uri "https://api.github.com/repos/erentomurcuk/QuickFileVerifier/releases/latest" -Method Get
+        $latestVersion = $latestVersion.tag_name
+        if ($latestVersion -ne $currentVersion) {
+            Write-Host "There is a new version available: $latestVersion" -ForegroundColor Green
+            Write-Host "You can download the latest version from: <https://github.com/erentomurcuk/QuickFileVerifier/releases>`n"
+        } else {
+            Write-Host "You have the latest version.`n" -ForegroundColor Green
+        }
+    }
+}
+
+# Run the function to check for updates
+CheckForUpdates
 
 # Function to check if GPG is installed
 function Is-GPGInstalled {
