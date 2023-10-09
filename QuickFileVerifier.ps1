@@ -63,6 +63,7 @@ if ($github) {
 
 if ($help) {
     Write-Host "`nThis script is for quickly checking the hash and signatures of a file either by terminal or the context menu." -ForegroundColor White
+    Write-Host "Note: The program checks the same path for the GPG signature file." -ForegroundColor White
 
     Write-Host "`nContext Menu" -ForegroundColor Red
     Write-Host "To run the script from the context menu, edit and run the .reg file in the repository. You can find the details in the README.md file." -ForegroundColor White
@@ -75,9 +76,9 @@ if ($help) {
     Write-Host "-version: Prints the version of the script." -ForegroundColor White
     Write-Host "-github: GitHub repository link of the script." -ForegroundColor White
     Write-Host "-help: Prints this help message." -ForegroundColor White
-    Write-Host "-toggleUpdateChecks: Toggles whether the script checks for updates every time it is run. It is disabled by default. Can also be changed from the config file.`n" -ForegroundColor White
-    Write-Host "-checkForUpdates: Checks for updates.`n" -ForegroundColor White
-    Write-Host "-updateProgram: Downloads and installs the latest version of the script (Currently being tested!).`n" -ForegroundColor White
+    Write-Host "-toggleUpdateChecks: Toggles whether the script checks for updates every time it is run. It is disabled by default. Can also be changed from the config file." -ForegroundColor White
+    Write-Host "-checkForUpdates: Checks for updates." -ForegroundColor White
+    Write-Host "-updateProgram: Downloads and installs the latest version of the script (Currently being tested!)." -ForegroundColor White
 
     exit
 
@@ -118,7 +119,7 @@ function CheckForUpdates {
     $latestVersion = $latestVersion.tag_name
     if ($latestVersion -ne $currentVersion) {
         Write-Host "There is a new version available: $latestVersion" -ForegroundColor Green
-        Write-Host "You can download the latest version from: <https://github.com/erentomurcuk/QuickFileVerifier/releases>`n"
+        Write-Host "You can download the latest version from: <https://github.com/erentomurcuk/QuickFileVerifier/releases>"
     } else {
         Write-Host "You have the latest version.`n" -ForegroundColor Green
     }
@@ -181,7 +182,8 @@ if ($checkForUpdates) {
 
 if ($updateProgram) {
 
-    Write-Host "`nThis command is being tested and may break the program. Type `"YES`" to continue." -ForegroundColor Yellow
+    Write-Host "`nThis command is being tested and may break the program. Type `"YES`" to continue." -ForegroundColor Red
+    Write-Host "You will lose your current config.json file and every file that has the same name will be replaced with the newer version." -ForegroundColor Red
     $continue = Read-Host
 
     if ($continue -eq "YES") {
@@ -198,7 +200,7 @@ if ($updateProgram) {
             exit
         }
     } else {
-        Write-Host "`nUpdate cancelled.`n" -ForegroundColor Red
+        Write-Host "Update cancelled.`n" -ForegroundColor Red
         exit
     }
 
