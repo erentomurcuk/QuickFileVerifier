@@ -334,25 +334,25 @@ if (Test-Path -Path $filePath -PathType Leaf) {
 
     switch ($hashType) {
         "MD5" {
-            $hash = fileMD5Hash
+            $hash = $fileMD5Hash
             Write-Host "`nType is MD5" -ForegroundColor Magenta
             Write-Host "File MD5 Hash: $hash" -ForegroundColor Magenta
             Write-Host "User MD5 Hash: $userHash" -ForegroundColor Magenta
         }
         "SHA1" {
-            $hash = fileSHA1Hash
+            $hash = $fileSHA1Hash
             Write-Host "`nType is SHA1" -ForegroundColor Green
             Write-Host "File SHA1 Hash: $hash" -ForegroundColor Green
             Write-Host "User SHA1 Hash: $userHash" -ForegroundColor Green
         }
         "SHA256" {
-            $hash = fileSHA256Hash
+            $hash = $fileSHA256Hash
             Write-Host "`nType is SHA256" -ForegroundColor Blue
             Write-Host "File SHA256 Hash: $hash" -ForegroundColor Blue
             Write-Host "User SHA256 Hash: $userHash" -ForegroundColor Blue
         }
         "SHA512" {
-            $hash = fileSHA512Hash
+            $hash = $fileSHA512Hash
             Write-Host "`nType is SHA512" -ForegroundColor Cyan
             Write-Host "File SHA512 Hash: $hash" -ForegroundColor Cyan
             Write-Host "User SHA512 Hash: $userHash" -ForegroundColor Cyan
