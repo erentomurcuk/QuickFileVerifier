@@ -14,9 +14,26 @@ Enables for you to quickly check for the GPG signature status, Code Signing sign
 
 ## Usage
 
+### From the context menu
+
 Just right click the file and select "Verify File with QFV" from the context menu. You will have to add required keys into `regedit.exe` to get the context menu entry.
 
 You can quickly add the keys with the provided `QFV - AddToContextMenu.reg` file. Make sure that you edit the file path of `QuickFileVerifier.ps1`.
+
+### From the terminal
+
+Run the file as: `.\QuickFileVerifier.ps1`
+
+Example:
+```powershell
+.\QuickFileVerifier.ps1 .\README.md
+```
+
+Warning: You may need to set your `ExecutionPolicy` to `RemoteSigned` with this command to run a script. Windows does not allow users to run scripts out of the box.
+You can set it by pasting this command:
+```powershell
+Set-ExecutionPolicy RemoteSigned
+```
 
 ## Issues
 
