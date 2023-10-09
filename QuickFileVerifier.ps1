@@ -102,6 +102,52 @@ function Verify-GPGSignature {
     }
 }
 
+function Get-StringLength {
+    param (
+        [string]$inputString
+    )
+
+    if ($inputString -ne $null) { 
+        return $inputString.Length
+    } else {
+        Write-Output "Invalid String Length!" -ForegroundColor Red
+    }
+}
+
+function Get-HashType {
+    param (
+        [string]$hashLength
+    )
+
+    if ($hashLength -eq $null -or $hashLength -eq "") {
+        Write-Output "Invalid Hash Length!" -ForegroundColor Red
+        return
+    }
+
+    switch ($hashLength) {
+        32 {
+            Write-Output "Hash type: MD5"
+            return "MD5"
+        }
+        40 {
+            Write-Output "Hash type: SHA-1"
+            return "SHA1"
+        }
+        64 {
+            Write-Output "Hash type: SHA-256"
+            return "SHA256"
+        }
+        128 {
+            Write-Output "Hash type: SHA-512"
+            return "SHA512"
+        }
+        default {
+            Write-Output "Unrecognized hash type. The hash length is $hashLength characters."
+            return "!"
+        }
+    }
+}
+
 # Check if the file exists
 if (Test-Path -Path $filePath -PathType Leaf) {
     Write-Host "File: $filePath" -ForegroundColor Green
@@ -139,36 +185,90 @@ if (Test-Path -Path $filePath -PathType Leaf) {
     }
     
     # Select a hash algorithm
-    Write-Host "`nSelect a hash algorithm:" -ForegroundColor Yellow
-    Write-Host "1. SHA1"
-    Write-Host "2. SHA256"
-    Write-Host "3. SHA512"
-    Write-Host "4. MD5"
+    #Write-Host "`nSelect a hash algorithm:" -ForegroundColor Yellow
+    #Write-Host "1. SHA1"
+    #Write-Host "2. SHA256"
+    #Write-Host "3. SHA512"
+    #Write-Host "4. MD5"
     
     # Prompt user to choose a hash algorithm by number
-    $choice = Read-Host "Enter the number corresponding to the desired hash algorithm (1-4)"
+    # $choice = Read-Host "Enter the number corresponding to the desired hash algorithm (1-4)"
 
-    switch ($choice) {
-        1 { $algorithm = "SHA1" }
-        2 { $algorithm = "SHA256" }
-        3 { $algorithm = "SHA512" }
-        4 { $algorithm = "MD5" }
-        default { Write-Host "Invalid choice. Exiting." -ForegroundColor Red; exit }
-    }
+    #switch ($choice) {
+    #    1 { $algorithm = "SHA1" }
+    #    2 { $algorithm = "SHA256" }
+    #    3 { $algorithm = "SHA512" }
+    #    4 { $algorithm = "MD5" }
+    #    default { Write-Host "Invalid choice. Exiting." -ForegroundColor Red; exit }
+    #}
 
     # Calculate and display the hash
-    $hash = Calculate-FileHash -filePath $filePath -algorithm $algorithm
-    Write-Host "File Hash ($algorithm): $hash" -ForegroundColor Green
+    $hash = Calculate-FileHash -filePath $filePath -algorithm SHA1
+    $fileSHA1Hash = $hash
+    Write-Host "SHA1: $hash" -ForegroundColor Green
+
+    $hash = Calculate-FileHash -filePath $filePath -algorithm SHA256
+    $fileSHA256Hash = $hash
+    Write-Host "SHA256: $hash" -ForegroundColor Blue
+
+    $hash = Calculate-FileHash -filePath $filePath -algorithm SHA512
+    $fileSHA512Hash = $hash
+    Write-Host "SHA512: $hash" -ForegroundColor Cyan
+
+    $hash = Calculate-FileHash -filePath $filePath -algorithm MD5
+    $fileMD5Hash = $hash
+    Write-Host "MD5: $hash" -ForegroundColor Magenta
+
 
     # Prompt user to input their own hash for verification
-    $userHash = Read-Host "Input your own hash to compare (Press Enter to skip)"
-    
+    Write-Host "`nInput your own hash to compare. The script will automatically check for the correct hash type. (Press Enter to skip)"
+    $userHash = Read-Host
+
     # Check if the user wants to compare hashes
     if ($userHash -ne "") {
+
+        # Check the input hash length and determine the hash type
+
+        $hashType = Get-HashType -hashLength (Get-StringLength -inputString $userHash)
+
+    # Switch Case for printing and comparison
+
+    switch ($hashType) {
+        "MD5" {
+            $hash = fileMD5Hash
+            Write-Host "`nType is MD5" -ForegroundColor Magenta
+            Write-Host "File MD5 Hash: $hash" -ForegroundColor Magenta
+            Write-Host "User MD5 Hash: $userHash" -ForegroundColor Magenta
+        }
+        "SHA1" {
+            $hash = fileSHA1Hash
+            Write-Host "`nType is SHA1" -ForegroundColor Green
+            Write-Host "File SHA1 Hash: $hash" -ForegroundColor Green
+            Write-Host "User SHA1 Hash: $userHash" -ForegroundColor Green
+        }
+        "SHA256" {
+            $hash = fileSHA256Hash
+            Write-Host "`nType is SHA256" -ForegroundColor Blue
+            Write-Host "File SHA256 Hash: $hash" -ForegroundColor Blue
+            Write-Host "User SHA256 Hash: $userHash" -ForegroundColor Blue
+        }
+        "SHA512" {
+            $hash = fileSHA512Hash
+            Write-Host "`nType is SHA512" -ForegroundColor Cyan
+            Write-Host "File SHA512 Hash: $hash" -ForegroundColor Cyan
+            Write-Host "User SHA512 Hash: $userHash" -ForegroundColor Cyan
+        }
+        "!" {
+            Write-Host "Skipped or invalid hash type/length. Exiting." -ForegroundColor Red
+            exit
+        }
+    }
+
+
         if ($userHash -eq $hash) {
-            Write-Host "Hashes match! The file is verified." -ForegroundColor Green
+            Write-Host "`nHashes match! The file is verified." -ForegroundColor Green
         } else {
-            Write-Host "Hashes do not match. The file may be altered or corrupted." -ForegroundColor Red
+            Write-Host "`nHashes do not match. The file may be altered or corrupted." -ForegroundColor Red
         }
     }
 } else {
