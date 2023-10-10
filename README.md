@@ -1,5 +1,7 @@
 # QuickFileVerifier
 
+Quick File Verifier enables its users to quickly check file verifications.
+
 Run `./QuickFileVerifier.ps1 -help` for more information.
 
 ## Warning!
