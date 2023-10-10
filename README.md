@@ -4,7 +4,7 @@ Run `./QuickFileVerifier.ps1 -help` for more information.
 
 ## Warning!
 
-Make sure that you read the LICENCE.md file before you use this program. Using this program means that you accept the licence.
+Make sure that you read the TERMS_AND_CONDITIONS.md file before you use this program. Using this program means that you accept the terms.
 
 **Never** run any _.ps1_ or _.reg_ files without checking the files yourselves to avoid damaging your computer.
 
