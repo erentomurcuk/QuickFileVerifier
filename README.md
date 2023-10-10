@@ -37,8 +37,20 @@ Set-ExecutionPolicy RemoteSigned
 To run this program everywhere, you will need to add it to the PATH.
 
 You can run this command to add the directory of the script into the PATH. Edit the required part with your path.
+
 ```powershell
 set PATH=%PATH%;<YOUR PATH HERE>
+```
+### Adding an alias after the script is in PATH.
+
+You can use this command to add an alias for the script to be able to run quicker.
+```powershell
+Set-Alias -Name qfv -Value QuickFileVerifier.ps1
+```
+
+If you want to remove the alias, run this command.
+```powershell
+Remove-Item -Path Alias:qfv
 ```
 
 ## Issues
